@@ -1,6 +1,19 @@
-# 🤖 Server MCP-Agent LangGraph avec outils Math & Météo
+# 🤖 Server MCP - Agent LangGraph avec outils Math & Météo
 
-Un projet d'agent IA basé sur **LangChain**, **LangGraph** et le protocole **MCP (Model Context Protocol)**, connectant un modèle LLM Groq à des outils externes via des serveurs MCP.
+> 🎯 **Objectif pédagogique** : Ce projet a pour but de montrer comment utiliser le protocole **MCP (Model Context Protocol)** pour connecter un agent IA à des outils externes, en utilisant les deux types de transport  : `stdio` et `streamable_http`.
+
+Un projet d'agent IA basé sur **LangChain**, **LangGraph** et le protocole **MCP (Model Context Protocol)**, connectant un modèle LLM Groq à des outils externes via des serveurs MCP, avec observabilité via **LangSmith** et **Langfuse**.
+
+### Qu'est-ce que MCP ?
+
+Le **Model Context Protocol** est un standard ouvert qui permet à un LLM de communiquer avec des outils externes (serveurs MCP) de manière structurée. Il définit comment un agent peut découvrir, appeler et recevoir les résultats d'outils distants, quel que soit le langage ou la plateforme utilisée.
+
+Ce projet illustre deux modes de communication MCP :
+
+| Transport | Cas d'usage | Exemple dans ce projet |
+|---|---|---|
+| `stdio` | Outil local, lancé par le client | `mathserver.py` |
+| `streamable_http` | Outil distant, serveur indépendant | `weather.py` |
 
 ---
 
@@ -10,15 +23,16 @@ Un projet d'agent IA basé sur **LangChain**, **LangGraph** et le protocole **MC
 Server_mcp/
 ├── src/
 │   ├── client.py          # Agent principal (LangGraph + Groq)
-│   ├── mathserver.py      # Serveur MCP - outils mathématiques (stdio)
-│   └── weather.py         # Serveur MCP - outil météo (streamable_http)
-├── .env                  
+│   ├── mathserver.py      # Serveur MCP — outils mathématiques (stdio)
+│   └── weather.py         # Serveur MCP — outil météo (streamable_http)
+├── .env                   # Clés API (non versionné)
+├── .env.example           # Modèle de variables d'environnement
 ├── .gitignore
 ├── .python-version        
-├── .venv/                 
-├── pyproject.toml        
-├── requitements.txt       
-├── uv.lock                
+├── .venv/                
+├── pyproject.toml         # Configuration du projet
+├── requitements.txt      
+├── uv.lock               
 └── README.md
 ```
 
@@ -27,8 +41,10 @@ Server_mcp/
 ## ⚙️ Prérequis
 
 - Python 3.11+ (voir `.python-version`)
-- [uv](https://docs.astral.sh/uv/) - gestionnaire de paquets (recommandé)
-- Un compte [Groq](https://console.groq.com) pour obtenir une clé API
+- [uv](https://docs.astral.sh/uv/) — gestionnaire de paquets (recommandé)
+- Un compte [Groq](https://console.groq.com) pour la clé API LLM
+- Un compte [LangSmith](https://smith.langchain.com) pour le tracing
+- Un compte [Langfuse](https://cloud.langfuse.com) pour l'observabilité
 
 ---
 
@@ -52,11 +68,30 @@ pip install -r requitements.txt
 
 ### Configurer les variables d'environnement
 
-Créer (ou compléter) le fichier `.env` à la racine :
+Copier le fichier `.env.example` et remplir les valeurs :
+
+```bash
+cp .env.example .env
+```
+
+Contenu du `.env` :
 
 ```env
-GROQ_API_KEY=votre_clé_api_groq_ici
+# LLM
+GROQ_API_KEY=votre_clé_groq_ici
+
+# LangSmith (tracing & évaluation)
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=votre_clé_langsmith_ici
+LANGCHAIN_PROJECT=server_mcp
+
+# Langfuse (observabilité & analytics)
+LANGFUSE_PUBLIC_KEY=votre_clé_publique_langfuse_ici
+LANGFUSE_SECRET_KEY=votre_clé_secrète_langfuse_ici
+LANGFUSE_HOST=https://cloud.langfuse.com
 ```
+
+
 
 ---
 
@@ -74,9 +109,21 @@ src/client.py
     ├── MultiServerMCPClient
     │       ├── math (stdio)    → src/mathserver.py
     │       └── weather (http)  → src/weather.py :8000
-    ├── ChatGroq (openai/gpt-oss-120)
-    └── create_agent (LangGraph)
+    ├── ChatGroq (openai/gpt-oss-120b)
+    ├── create_react_agent (LangGraph)
+    ├── LangSmith  ──────────────────────→ smith.langchain.com
+    └── Langfuse   ──────────────────────→ cloud.langfuse.com
 ```
+
+---
+
+## 📊 Observabilité
+
+### LangSmith
+Trace automatiquement toutes les invocations de l'agent, les appels aux outils MCP et les réponses du modèle. Accessible sur [smith.langchain.com](https://smith.langchain.com) sous le projet `server_mcp`.
+
+### Langfuse
+Fournit des analytics détaillés sur les coûts, latences et qualité des réponses LLM. Accessible sur [cloud.langfuse.com](https://cloud.langfuse.com).
 
 ---
 
@@ -97,7 +144,7 @@ src/client.py
 
 ## ▶️ Lancer le projet
 
-### Étape 1 - Démarrer le serveur météo (Terminal 1)
+### Étape 1 — Démarrer le serveur météo (Terminal 1)
 
 ```bash
 source .venv/bin/activate
@@ -106,7 +153,7 @@ python src/weather.py
 
 Le serveur démarre sur `http://127.0.0.1:8000/mcp`
 
-### Étape 2 -Lancer le client agent (Terminal 2)
+### Étape 2 — Lancer le client agent (Terminal 2)
 
 ```bash
 source .venv/bin/activate
@@ -120,7 +167,7 @@ Les outils disponibles: ['add', 'subtract', 'get_weather']
 La réponse à votre question: (4+5) = 9 et (54-50) = 4
 ```
 
--
+---
 
 ## 🐛 Erreurs fréquentes
 
@@ -130,21 +177,24 @@ La réponse à votre question: (4+5) = 9 et (54-50) = 4
 | `SyntaxError: forgot a comma` | `print("texte" variable)` | Ajouter une virgule : `print("texte", variable)` |
 | `object dict can't be used in await` | Utilisation de `.invoke()` au lieu de `.ainvoke()` | Remplacer par `await agent.ainvoke(...)` |
 | `streamable-http` non reconnu | Tiret au lieu d'underscore | Utiliser `streamable_http` |
+| Push GitHub bloqué | Fichier `.env` commité avec des clés | Révoquer les clés, retirer `.env` de l'historique Git |
 
 ---
 
 ## 📚 Technologies utilisées
 
-- [LangChain](https://python.langchain.com/) — Framework LLM
-- [LangGraph](https://langchain-ai.github.io/langchain/) — Agent ReAct
-- [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters) — Intégration MCP
-- [FastMCP](https://github.com/jlowin/fastmcp) — Création de serveurs MCP
+- [LangChain](https://python.langchain.com/) - Framework LLM
+- [LangGraph](https://langchain-ai.github.io/langgraph/) - Agent ReAct
+- [langchain-mcp-adapters](https://github.com/langchain-ai/langchain-mcp-adapters) -Intégration MCP
+- [FastMCP](https://github.com/jlowin/fastmcp) - Création de serveurs MCP
 - [Groq](https://groq.com/) — Inférence LLM ultra-rapide
-- [uv](https://docs.astral.sh/uv/) — Gestionnaire de paquets moderne
-- [python-dotenv](https://pypi.org/project/python-dotenv/) — Gestion des variables d'environnement
+- [LangSmith](https://smith.langchain.com/) - Tracing & évaluation des chaînes LLM
+- [Langfuse](https://langfuse.com/) - Observabilité & analytics LLM
+- [uv](https://docs.astral.sh/uv/) - Gestionnaire de paquets moderne
+- [python-dotenv](https://pypi.org/project/python-dotenv/)- Gestion des variables d'environnement
 
 ---
 
 ## 👤 Auteur
 
-**Bane Seydina Mouhamet** 
+**BANE Seydina Mouhamet**
