@@ -10,15 +10,15 @@ Un projet d'agent IA basé sur **LangChain**, **LangGraph** et le protocole **MC
 Server_mcp/
 ├── src/
 │   ├── client.py          # Agent principal (LangGraph + Groq)
-│   ├── mathserver.py      # Serveur MCP — outils mathématiques (stdio)
-│   └── weather.py         # Serveur MCP — outil météo (streamable_http)
-├── .env                   # Clés API (non versionné)
+│   ├── mathserver.py      # Serveur MCP - outils mathématiques (stdio)
+│   └── weather.py         # Serveur MCP - outil météo (streamable_http)
+├── .env                  
 ├── .gitignore
-├── .python-version        # Version Python du projet
-├── .venv/                 # Environnement virtuel Python
-├── pyproject.toml         # Configuration du projet
-├── requitements.txt       # Dépendances Python
-├── uv.lock                # Lockfile uv
+├── .python-version        
+├── .venv/                 
+├── pyproject.toml        
+├── requitements.txt       
+├── uv.lock                
 └── README.md
 ```
 
